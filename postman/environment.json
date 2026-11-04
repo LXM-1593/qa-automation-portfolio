@@ -1,0 +1,9 @@
+{
+  "id": "d7c1f3a2-restful-api-dev",
+  "name": "restful-api.dev",
+  "values": [
+    { "key": "baseUrl", "value": "https://api.restful-api.dev", "type": "default", "enabled": true },
+    { "key": "objectId", "value": "", "type": "default", "enabled": true }
+  ],
+  "_postman_variable_scope": "environment"
+}

@@ -1,0 +1,500 @@
+{
+  "info": {
+    "_postman_id": "6f1c2a9e-qa-portfolio-2026",
+    "name": "restful-api.dev - Object CRUD Regression",
+    "description": "接口回归集合，覆盖 api.restful-api.dev 的对象读取、创建、更新、删除及异常场景。\n\n运行方式：\n  newman run postman/collection.json -e postman/environment.json\n\n说明：\n- 文件夹 01-03 断言真实且正确的契约，应全部通过。\n- 文件夹 04 断言期望契约，用于复现 DEF-001 ~ DEF-006，预期失败，详见 docs/defect-report.md。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Read",
+      "item": [
+        {
+          "name": "List all objects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('response is a non-empty array', () => {",
+                  "  pm.expect(body).to.be.an('array');",
+                  "  pm.expect(body.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('every object exposes id and name', () => {",
+                  "  body.forEach(item => {",
+                  "    pm.expect(item).to.have.property('id');",
+                  "    pm.expect(item).to.have.property('name');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "Filter by two ids",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('returns exactly the requested ids', () => {",
+                  "  const ids = body.map(item => item.id).sort();",
+                  "  pm.expect(ids).to.eql(['3', '5']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects?id=3&id=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects"],
+              "query": [
+                { "key": "id", "value": "3" },
+                { "key": "id", "value": "5" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - CRUD happy path",
+      "item": [
+        {
+          "name": "Create object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 2xx', () => pm.response.to.be.success);",
+                  "const body = pm.response.json();",
+                  "pm.test('server generated an id', () => pm.expect(body.id).to.be.a('string').and.not.empty);",
+                  "pm.test('name is echoed back', () => pm.expect(body.name).to.eql('QA Portfolio Laptop'));",
+                  "pm.test('createdAt timestamp is returned', () => pm.expect(body.createdAt).to.be.a('number'));",
+                  "pm.environment.set('objectId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QA Portfolio Laptop\",\n  \"data\": {\n    \"year\": 2026,\n    \"price\": 1299.99,\n    \"CPU model\": \"Intel Core i7\",\n    \"Hard disk size\": \"1 TB\"\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "Get created object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('id matches the created object', () => pm.expect(body.id).to.eql(pm.environment.get('objectId')));",
+                  "pm.test('payload round-trips', () => {",
+                  "  pm.expect(body.name).to.eql('QA Portfolio Laptop');",
+                  "  pm.expect(body.data.price).to.eql(1299.99);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects/{{objectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "{{objectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update object (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('name is replaced', () => pm.expect(body.name).to.eql('QA Portfolio Laptop v2'));",
+                  "pm.test('nested data is replaced', () => {",
+                  "  pm.expect(body.data.year).to.eql(2027);",
+                  "  pm.expect(body.data.price).to.eql(1399.99);",
+                  "});",
+                  "pm.test('updatedAt is present', () => pm.expect(body.updatedAt).to.be.a('number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QA Portfolio Laptop v2\",\n  \"data\": {\n    \"year\": 2027,\n    \"price\": 1399.99,\n    \"CPU model\": \"Intel Core i9\",\n    \"Hard disk size\": \"2 TB\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/objects/{{objectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "{{objectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Patch object name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('only name changes', () => pm.expect(body.name).to.eql('QA Portfolio Laptop v2 (patched)'));",
+                  "pm.test('previously updated data is preserved', () => pm.expect(body.data.price).to.eql(1399.99));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"QA Portfolio Laptop v2 (patched)\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/objects/{{objectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "{{objectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 2xx', () => pm.response.to.be.success);",
+                  "const body = pm.response.json();",
+                  "pm.test('deletion message references the id', () => pm.expect(body.message).to.include(pm.environment.get('objectId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects/{{objectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "{{objectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Deleted object is gone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('error mentions the id', () => pm.expect(pm.response.json().error).to.include(pm.environment.get('objectId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects/{{objectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "{{objectId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Negative contract",
+      "item": [
+        {
+          "name": "Get unknown id returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('error body is present', () => pm.expect(pm.response.json()).to.have.property('error'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects/does-not-exist-123456",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "does-not-exist-123456"]
+            }
+          }
+        },
+        {
+          "name": "Delete unknown id returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('error body is present', () => pm.expect(pm.response.json()).to.have.property('error'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects/does-not-exist-123456",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "does-not-exist-123456"]
+            }
+          }
+        },
+        {
+          "name": "Malformed JSON returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error says invalid body', () => pm.expect(pm.response.json().error).to.include('Invalid request body'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{this is not json" },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Defect reproduction (expected to fail)",
+      "description": "以下断言表达期望契约，当前实现不满足，用于复现 docs/defect-report.md 中的 DEF-001 ~ DEF-006。每个请求结束时自动清理创建出的脏数据。",
+      "item": [
+        {
+          "name": "DEF-001 missing name should be rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('DEF-001: missing name must return 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('DEF-001: no object should be created', () => pm.expect(body).to.not.have.property('id'));",
+                  "if (body && body.id) {",
+                  "  pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects/' + body.id, method: 'DELETE' }, () => {});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"data\": { \"year\": 2026 }\n}" },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "DEF-002 empty name should be rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('DEF-002: empty name must return 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "if (body && body.id) {",
+                  "  pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects/' + body.id, method: 'DELETE' }, () => {});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"\",\n  \"data\": { \"year\": 2026 }\n}" },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "DEF-003 numeric name should be rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('DEF-003: numeric name must return 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "if (body && body.id) {",
+                  "  pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects/' + body.id, method: 'DELETE' }, () => {});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": 12345,\n  \"data\": { \"year\": 2026 }\n}" },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "DEF-004 create should return 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('DEF-004: create must return 201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body && body.id) {",
+                  "  pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects/' + body.id, method: 'DELETE' }, () => {});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"DEF-004 probe\",\n  \"data\": { \"year\": 2026 }\n}" },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "DEF-006 setup - create disposable object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('setup object created', () => pm.response.to.be.success);",
+                  "pm.environment.set('deleteProbeId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"DEF-006 disposable object\",\n  \"data\": { \"year\": 2026 }\n}" },
+            "url": { "raw": "{{baseUrl}}/objects", "host": ["{{baseUrl}}"], "path": ["objects"] }
+          }
+        },
+        {
+          "name": "DEF-006 delete should return 204",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('DEF-006: delete must return 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/objects/{{deleteProbeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["objects", "{{deleteProbeId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.restful-api.dev" }
+  ]
+}

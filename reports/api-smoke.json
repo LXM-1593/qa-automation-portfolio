@@ -1,0 +1,328 @@
+[
+  {
+    "label": "list_objects",
+    "request": {
+      "method": "GET",
+      "url": "https://api.restful-api.dev/objects"
+    },
+    "status": 200,
+    "elapsed_ms": 1924,
+    "body": [
+      {
+        "id": "1",
+        "name": "Google Pixel 6 Pro",
+        "data": {
+          "color": "Cloudy White",
+          "capacity": "128 GB"
+        }
+      },
+      {
+        "id": "2",
+        "name": "Apple iPhone 12 Mini, 256GB, Blue",
+        "data": null
+      },
+      {
+        "id": "3",
+        "name": "Apple iPhone 12 Pro Max",
+        "data": {
+          "color": "Cloudy White",
+          "capacity GB": 512
+        }
+      },
+      {
+        "id": "4",
+        "name": "Apple iPhone 11, 64GB",
+        "data": {
+          "price": 389.99,
+          "color": "Purple"
+        }
+      },
+      {
+        "id": "5",
+        "name": "Samsung Galaxy Z Fold2",
+        "data": {
+          "price": 689.99,
+          "color": "Brown"
+        }
+      },
+      {
+        "id": "6",
+        "name": "Apple AirPods",
+        "data": {
+          "generation": "3rd",
+          "price": 120
+        }
+      },
+      {
+        "id": "7",
+        "name": "Apple MacBook Pro 16",
+        "data": {
+          "year": 2019,
+          "price": 1849.99,
+          "CPU model": "Intel Core i9",
+          "Hard disk size": "1 TB"
+        }
+      },
+      {
+        "id": "8",
+        "name": "Apple Watch Series 8",
+        "data": {
+          "Strap Colour": "Elderberry",
+          "Case Size": "41mm"
+        }
+      },
+      {
+        "id": "9",
+        "name": "Beats Studio3 Wireless",
+        "data": {
+          "Color": "Red",
+          "Description": "High-performance wireless noise cancelling headphones"
+        }
+      },
+      {
+        "id": "10",
+        "name": "Apple iPad Mini 5th Gen",
+        "data": {
+          "Capacity": "64 GB",
+          "Screen size": 7.9
+        }
+      },
+      {
+        "id": "11",
+        "name": "Apple iPad Mini 5th Gen",
+        "data": {
+          "Capacity": "254 GB",
+          "Screen size": 7.9
+        }
+      },
+      {
+        "id": "12",
+        "name": "Apple iPad Air",
+        "data": {
+          "Generation": "4th",
+          "Price": "419.99",
+          "Capacity": "64 GB"
+        }
+      },
+      {
+        "id": "13",
+        "name": "Apple iPad Air",
+        "data": {
+          "Generation": "4th",
+          "Price": "519.99",
+          "Capacity": "256 GB"
+        }
+      }
+    ]
+  },
+  {
+    "label": "create_object",
+    "request": {
+      "method": "POST",
+      "url": "https://api.restful-api.dev/objects",
+      "json": {
+        "name": "QA Portfolio Laptop",
+        "data": {
+          "year": 2026,
+          "price": 1299.99,
+          "CPU model": "Intel Core i7",
+          "Hard disk size": "1 TB"
+        }
+      }
+    },
+    "status": 200,
+    "elapsed_ms": 854,
+    "body": {
+      "id": "ff808181a09d98f701a1a41253d8284c",
+      "name": "QA Portfolio Laptop",
+      "createdAt": 1793754026968,
+      "data": {
+        "year": 2026,
+        "price": 1299.99,
+        "CPU model": "Intel Core i7",
+        "Hard disk size": "1 TB"
+      }
+    }
+  },
+  {
+    "label": "get_created_object",
+    "request": {
+      "method": "GET",
+      "url": "https://api.restful-api.dev/objects/ff808181a09d98f701a1a41253d8284c"
+    },
+    "status": 200,
+    "elapsed_ms": 485,
+    "body": {
+      "id": "ff808181a09d98f701a1a41253d8284c",
+      "name": "QA Portfolio Laptop",
+      "data": {
+        "year": 2026,
+        "price": 1299.99,
+        "CPU model": "Intel Core i7",
+        "Hard disk size": "1 TB"
+      }
+    }
+  },
+  {
+    "label": "update_object_put",
+    "request": {
+      "method": "PUT",
+      "url": "https://api.restful-api.dev/objects/ff808181a09d98f701a1a41253d8284c",
+      "json": {
+        "name": "QA Portfolio Laptop v2",
+        "data": {
+          "year": 2027,
+          "price": 1399.99,
+          "CPU model": "Intel Core i9",
+          "Hard disk size": "2 TB"
+        }
+      }
+    },
+    "status": 200,
+    "elapsed_ms": 749,
+    "body": {
+      "id": "ff808181a09d98f701a1a41253d8284c",
+      "name": "QA Portfolio Laptop v2",
+      "updatedAt": 1793754028214,
+      "data": {
+        "year": 2027,
+        "price": 1399.99,
+        "CPU model": "Intel Core i9",
+        "Hard disk size": "2 TB"
+      }
+    }
+  },
+  {
+    "label": "patch_object",
+    "request": {
+      "method": "PATCH",
+      "url": "https://api.restful-api.dev/objects/ff808181a09d98f701a1a41253d8284c",
+      "json": {
+        "name": "QA Portfolio Laptop v2 (patched)"
+      }
+    },
+    "status": 200,
+    "elapsed_ms": 708,
+    "body": {
+      "id": "ff808181a09d98f701a1a41253d8284c",
+      "name": "QA Portfolio Laptop v2 (patched)",
+      "updatedAt": 1793754028904,
+      "data": {
+        "year": 2027,
+        "price": 1399.99,
+        "CPU model": "Intel Core i9",
+        "Hard disk size": "2 TB"
+      }
+    }
+  },
+  {
+    "label": "delete_object",
+    "request": {
+      "method": "DELETE",
+      "url": "https://api.restful-api.dev/objects/ff808181a09d98f701a1a41253d8284c"
+    },
+    "status": 200,
+    "elapsed_ms": 474,
+    "body": {
+      "message": "Object with id = ff808181a09d98f701a1a41253d8284c has been deleted."
+    }
+  },
+  {
+    "label": "get_deleted_object",
+    "request": {
+      "method": "GET",
+      "url": "https://api.restful-api.dev/objects/ff808181a09d98f701a1a41253d8284c"
+    },
+    "status": 404,
+    "elapsed_ms": 462,
+    "body": {
+      "error": "Object with id=ff808181a09d98f701a1a41253d8284c was not found."
+    }
+  },
+  {
+    "label": "get_unknown_id",
+    "request": {
+      "method": "GET",
+      "url": "https://api.restful-api.dev/objects/does-not-exist-123456"
+    },
+    "status": 404,
+    "elapsed_ms": 504,
+    "body": {
+      "error": "Object with id=does-not-exist-123456 was not found."
+    }
+  },
+  {
+    "label": "create_missing_name",
+    "request": {
+      "method": "POST",
+      "url": "https://api.restful-api.dev/objects",
+      "json": {
+        "data": {
+          "year": 2026
+        }
+      }
+    },
+    "status": 200,
+    "elapsed_ms": 753,
+    "body": {
+      "id": "ff808181a09d98f701a1a41263d5284d",
+      "name": null,
+      "createdAt": 1793754031061,
+      "data": {
+        "year": 2026
+      }
+    }
+  },
+  {
+    "label": "delete_unknown_id",
+    "request": {
+      "method": "DELETE",
+      "url": "https://api.restful-api.dev/objects/does-not-exist-123456"
+    },
+    "status": 404,
+    "elapsed_ms": 600,
+    "body": {
+      "error": "Object with id = does-not-exist-123456 doesn't exist."
+    }
+  },
+  {
+    "label": "create_malformed_json",
+    "request": {
+      "method": "POST",
+      "url": "https://api.restful-api.dev/objects",
+      "data": "{this is not json"
+    },
+    "status": 400,
+    "elapsed_ms": 682,
+    "body": {
+      "error": "Invalid request body"
+    }
+  },
+  {
+    "label": "filter_by_id",
+    "request": {
+      "method": "GET",
+      "url": "https://api.restful-api.dev/objects?id=3&id=5"
+    },
+    "status": 200,
+    "elapsed_ms": 495,
+    "body": [
+      {
+        "id": "3",
+        "name": "Apple iPhone 12 Pro Max",
+        "data": {
+          "color": "Cloudy White",
+          "capacity GB": 512
+        }
+      },
+      {
+        "id": "5",
+        "name": "Samsung Galaxy Z Fold2",
+        "data": {
+          "price": 689.99,
+          "color": "Brown"
+        }
+      }
+    ]
+  }
+]
