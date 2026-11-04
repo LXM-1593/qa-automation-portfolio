@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 
 from .base_page import BasePage
@@ -61,10 +62,14 @@ class InventoryPage(BasePage):
         return 0
 
     def go_to_cart(self) -> "InventoryPage":
-        self.click(self.CART_LINK)
+        self.click_until(self.CART_LINK, EC.url_contains("cart.html"))
         return self
 
     def logout(self) -> "InventoryPage":
+        # 侧边菜单是 JS 展开的，先等菜单项可点击，再以后置条件确认已离开商品页
         self.click(self.MENU_BUTTON)
-        self.click(self.LOGOUT_LINK)
+        self.click_until(
+            self.LOGOUT_LINK,
+            lambda driver: "inventory.html" not in driver.current_url,
+        )
         return self

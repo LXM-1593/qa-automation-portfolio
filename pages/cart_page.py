@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 from .base_page import BasePage
 
@@ -33,5 +34,6 @@ class CartPage(BasePage):
         return self
 
     def checkout(self) -> "CartPage":
-        self.click(self.CHECKOUT_BUTTON)
+        # 以后置条件（URL 跳到 checkout-step-one）作为重试判据，兼容 JS 绑定竞态
+        self.click_until(self.CHECKOUT_BUTTON, EC.url_contains("checkout-step-one"))
         return self
