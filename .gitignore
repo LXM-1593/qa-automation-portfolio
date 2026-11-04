@@ -1,0 +1,23 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+.profiles/
+.chrome-profile*/
+node_modules/
+package-lock.json
+
+# ---- Test artefacts ----
+reports/*.html
+reports/screenshots/
+*.log
+
+# ---- Editors / OS ----
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
