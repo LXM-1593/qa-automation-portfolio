@@ -16,6 +16,12 @@ reports/*.html
 reports/screenshots/
 *.log
 
+# ---- Local scratch / debug ----
+scratch/
+.jobs.json
+.runs.json
+.repo.json
+
 # ---- Editors / OS ----
 .idea/
 .vscode/
