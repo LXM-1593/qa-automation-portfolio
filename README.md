@@ -1,5 +1,8 @@
 # QA Automation Portfolio
 
+[![UI Regression](https://github.com/LXM-1593/qa-automation-portfolio/actions/workflows/ui-regression.yml/badge.svg)](https://github.com/LXM-1593/qa-automation-portfolio/actions/workflows/ui-regression.yml)
+[![API Regression](https://github.com/LXM-1593/qa-automation-portfolio/actions/workflows/api-regression.yml/badge.svg)](https://github.com/LXM-1593/qa-automation-portfolio/actions/workflows/api-regression.yml)
+
 面向软件测试岗位的端到端作品集：**UI 回归自动化（Pytest + Selenium）+ 接口测试（Postman / Newman）+ 结构化用例与缺陷资产**。
 
 - UI 目标站点：[SauceDemo](https://www.saucedemo.com)（公开电商演示站，覆盖登录 → 浏览 → 购物车 → 结算全链路）
@@ -17,6 +20,7 @@
 | 报告 | pytest-html（含失败截图） |
 | 接口测试 | Postman Collection v2.1 + Newman |
 | 数据校验 | requests（缺陷证据采集） |
+| 持续集成 | GitHub Actions（UI 与接口拆成两个工作流） |
 | 版本控制 | Git（按功能分层提交） |
 
 ---
@@ -30,6 +34,9 @@ qa-automation-portfolio/
 ├── requirements.txt
 ├── README.md
 ├── .gitignore
+├── .github/workflows/
+│   ├── ui-regression.yml       # push/PR/定时跑 UI 回归，上传报告与截图
+│   └── api-regression.yml      # postman/ 变更或手动触发跑接口集合
 ├── pages/                      # 页面对象层（Page Object Model）
 │   ├── __init__.py
 │   ├── base_page.py            # 显式等待、点击、输入等通用能力
@@ -53,6 +60,7 @@ qa-automation-portfolio/
 │   ├── run_tests.ps1           # Windows 一键执行
 │   └── run_tests.sh            # macOS / Linux 一键执行
 ├── docs/
+│   ├── test-strategy.md        # 测试策略：范围/分层/设计方法/出入口准则/CI 规则
 │   ├── test-cases.md           # UI 用例集（15 条）
 │   ├── api-test-cases.md       # 接口用例集（18 条）
 │   └── defect-report.md        # 缺陷报告（6 条 + 1 观察项）
@@ -140,6 +148,33 @@ node_modules/.bin/newman run postman/collection.json -e postman/environment.json
 
 ---
 
+## 持续集成（GitHub Actions）
+
+两个 workflow 分开，是为了**让接口层只在必要时消耗配额**（公开 API 每天仅 50 次请求）。
+
+| Workflow | 触发 | 阻塞 | 产物 |
+|---|---|---|---|
+| `ui-regression.yml` | push / PR 到 `main`、每周一 09:00、手动 | 是 | `ui-report`（HTML 报告 + 失败截图） |
+| `api-regression.yml` | `postman/**` 变更、每周一 09:00、手动 | 稳定层阻塞；缺陷层不阻塞 | `api-report`（Newman JSON） |
+
+**三个刻意设计**：
+
+1. **接口层不做"每次 push 必跑"**——50 次/天的配额会被 CI 瞬间打空，造成假红。改为路径过滤 + 定时 + 手动。
+2. **缺陷复现文件夹永不阻塞**——它失败代表"缺陷仍在"，是预期状态；若设为阻塞，红灯会变成噪音。
+   手动触发时勾选 `run_defect_suite` 才会执行。
+3. **配额预检前置**——若 `GET /objects` 返回 405（配额耗尽）或 5xx，直接 `exit 1` 并明确提示
+   "本次结果不可作为回归结论"，避免把环境问题误判为用例失败。
+
+手动全量验证（含缺陷复现）：
+
+```bash
+gh workflow run api-regression.yml -f run_defect_suite=true
+```
+
+> 注：`[skip ci]` 写进 commit message 可跳过 UI 工作流（纯文档改动时用）。
+
+---
+
 ## 用例与缺陷记录说明
 
 ### 用例资产
@@ -150,6 +185,9 @@ node_modules/.bin/newman run postman/collection.json -e postman/environment.json
 | `docs/api-test-cases.md` | 接口用例：方法/路径、请求要点、预期 vs 实际、结论 | `API-xxx` / `DEF-xxx` |
 
 每条 UI 用例都可追溯到 `tests/` 中的具体函数；接口用例的「实际结果」来自真实调用转录，而非推测。
+
+**测试策略**（范围边界、分层依据、设计方法落地位置、环境与数据策略、出入口准则、缺陷分级、CI 规则、度量基线、风险登记）见
+`docs/test-strategy.md` —— 用例说明"测了什么"，策略说明"为什么这样测"。
 
 ### 缺陷记录
 

@@ -1,0 +1,104 @@
+name: API Regression
+
+# 为什么不在每次 push 都跑：
+# api.restful-api.dev 每 24h 限 50 请求，超额返回 405（DEF-007）。
+# 无条件跑会瞬间耗尽配额，制造"假红"。
+# 因此：仅在 postman/ 或本文件变更时触发，外加每周定时与手动全量。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "postman/**"
+      - "docs/api-test-cases.md"
+      - ".github/workflows/api-regression.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "postman/**"
+      - ".github/workflows/api-regression.yml"
+  workflow_dispatch:
+    inputs:
+      run_defect_suite:
+        description: "同时运行缺陷复现文件夹（预期失败，不阻塞）"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 1 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COLLECTION: postman/collection.json
+  ENVIRONMENT: postman/environment.json
+  API_HEALTH_URL: https://api.restful-api.dev/objects
+
+jobs:
+  api-tests:
+    name: Newman contract suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Newman
+        run: npm install --global newman@6
+
+      - name: Prepare report directory
+        run: mkdir -p reports
+
+      # 入口准则：服务可用且配额未耗尽，否则后续失败无法归因
+      - name: Quota pre-check
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$API_HEALTH_URL")
+          echo "GET /objects -> $code"
+          if [ "$code" = "405" ]; then
+            echo "::error::接口配额已耗尽（HTTP 405，见 DEF-007）。请等待配额重置后重跑，本次结果不可作为回归结论。"
+            exit 1
+          fi
+          if [ "$code" -ge 500 ] 2>/dev/null || [ "$code" = "000" ]; then
+            echo "::error::目标服务不可用（HTTP $code），请先确认服务状态再判断用例结果。"
+            exit 1
+          fi
+
+      # 阻塞层：契约、CRUD、异常处理全绿才算通过
+      - name: Stable contract suite (blocking)
+        run: |
+          newman run "$COLLECTION" -e "$ENVIRONMENT" \
+            --folder "01 - Read" \
+            --folder "02 - CRUD happy path" \
+            --folder "03 - Negative contract" \
+            --reporters cli,json \
+            --reporter-json-export reports/api-stable.json \
+            --reporter-cli-no-banner
+
+      # 非阻塞层：失败 = 缺陷仍存在，属预期状态
+      - name: Defect reproduction suite (non-blocking)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_defect_suite }}
+        continue-on-error: true
+        run: |
+          newman run "$COLLECTION" -e "$ENVIRONMENT" \
+            --folder "04 - Defect reproduction (expected to fail)" \
+            --reporters cli,json \
+            --reporter-json-export reports/api-defects.json \
+            --reporter-cli-no-banner
+
+      - name: Upload Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-report
+          path: reports/*.json
+          if-no-files-found: ignore
+          retention-days: 14
